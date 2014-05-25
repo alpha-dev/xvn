@@ -1,0 +1,1 @@
+xvn extends the default subversion console client by adding colorized diffs with whitespace tracking, provides filtering options for the log, status and diff, provides mergetracking (based upon the popular svnmerge python script shipped within this package) and lots more. Have a look to find out yourself.

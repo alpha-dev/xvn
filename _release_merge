@@ -1,0 +1,98 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+# Copyright (c) 2014, Sven Kretschmann
+# All rights reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+source `dirname $0`/conf/env.sh
+source $BIN_DIR/conf/user_creds.sh
+
+if [ -z "${1}" -o "--help" = "${1}" ]
+then
+    echo "Merge selected revisions into a set of releases. The script assumes you have one directory containing the checkouts of all managed releases."
+    echo
+    echo "Usage: $0 <revision>"
+    exit 0;
+fi
+
+MERGE_RELEASES=""
+AVAILABLE_RELEASES=""
+
+for RELEASE in `ls`
+do
+    if [ -d "${RELEASE}" ]
+    then
+        if [ -z "${AVAILABLE_RELEASES}" ]
+        then
+            AVAILABLE_RELEASES="${RELEASE}"
+        else
+            AVAILABLE_RELEASES="${AVAILABLE_RELEASES} ${RELEASE}"
+        fi
+    fi
+done
+
+echo -n "Merge to all releases? (${AVAILABLE_RELEASES}) y/[n] "
+read MERGE_ALL
+
+if [ "y" = "${MERGE_ALL}" ]
+then
+    MERGE_RELEASES="${AVAILABLE_RELEASES}"
+else
+    for RELEASE in ${AVAILABLE_RELEASES} 
+    do
+        echo -n "Merge to ${RELEASE}? y/[n] "
+        read DO_MERGE
+
+        if [ "y" = "${DO_MERGE}" ]
+        then
+            MERGE_RELEASES="${MERGE_RELEASES} ${RELEASE}"
+        fi
+    done
+fi
+
+if [ "${MERGE_RELEASES}" ]
+then
+    for RELEASE in ${MERGE_RELEASES}
+    do
+        echo -e "Merging to \033[33m${RELEASE}\033[0m"
+        cd ${RELEASE}
+        _svnmerge ${1} --username="${SVN_USERNAME}" --password="${SVN_PASSWORD}"
+        cd ..
+    done
+
+    echo -e "Merged to releases: \033[33m${MERGE_RELEASES}\033[0m"
+
+    echo -n "View diff for all releases? y/[n] "
+    read VIEW_DIFF
+
+    if [ "y" = "${VIEW_DIFF}" ]
+    then
+        _svndiff ${MERGE_RELEASES} --username="${SVN_USERNAME}" --password="${SVN_PASSWORD}"
+    fi
+
+    echo -n "Commit all changes? y/[n] "
+    read DO_COMMIT
+
+    if [ "y" = "${DO_COMMIT}" ]
+    then
+        for RELEASE in ${MERGE_RELEASES}
+        do
+            echo -e "Commit change in \033[33m${RELEASE}\033[0m"
+            cd ${RELEASE}
+            svn ci -F svnmerge-commit-message.txt --username="${SVN_USERNAME}" --password="${SVN_PASSWORD}"
+            cd ..
+        done
+    fi
+fi

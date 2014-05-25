@@ -1,0 +1,87 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+# Copyright (c) 2014, Sven Kretschmann
+# All rights reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+if [ "--help" = "$1" ]
+then
+    echo "Merge revisions from trunk into a release / branch."
+    echo
+    echo "Usage: $0 [{merge}|avail] <target>"
+    echo
+    echo "Supported parameters for merge:"
+    echo "-r The revision range to merge"
+    echo "The target parameter is not available here."
+    echo
+    echo "Supported parameters for avail:"
+    echo "-s Search for revisions with a specific text in the log message"
+    echo "-l Limit the amount of revisions to display (defaults to 10)"
+    exit 0
+fi
+
+source `dirname $0`/conf/env.sh
+source $BIN_DIR/conf/user_creds.sh
+
+command="merge"
+revision=""
+limit="-l10"
+search=""
+target=""
+if [ "$1" ]
+then
+	case $1 in
+		merge|avail|init)
+			command="$1" ;;
+		*)
+			command="merge"
+			revision="$1" ;;
+	esac
+fi
+
+if [ "$command" = "merge" -a "$revision" = "" -a "$2" ]
+then
+	revision="$2"
+fi
+
+if [ "$revision" != "" -a "${revision:0:2}" != '-r' ]
+then
+        revision="-r$revision"
+fi
+
+if [ "$command" = "avail" ]
+then
+    for arg in $2 $3 $4
+    do
+        if [ "${arg}" ]
+        then
+            if [ "${arg:0:2}" = '-l' ]
+            then
+                limit="${arg}"
+            elif [ "${arg:0:2}" = '-s' ]
+            then
+                search="${arg}"
+            else
+                target="${arg}"
+            fi
+        fi
+    done
+    $PHP_COMMAND $BIN_DIR/helpers/_merge_avail.php $limit $search $target --username="${SVN_USERNAME}" --password="${SVN_PASSWORD}"
+elif [ "$command" = "init" ]
+then
+    $PHP_COMMAND $BIN_DIR/helpers/_merge_init.php $revision --username="${SVN_USERNAME}" --password="${SVN_PASSWORD}"
+else
+    $PHP_COMMAND $BIN_DIR/helpers/_merge.php $revision --username="${SVN_USERNAME}" --password="${SVN_PASSWORD}"
+fi

@@ -1,0 +1,103 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+# Copyright (c) 2014, Sven Kretschmann
+# All rights reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+source `dirname $0`/conf/env.sh
+
+NEEDS_CREDS=1
+COMMAND="svn"
+if [ -n "$1" ]
+then
+    case $1 in
+        st|status)
+            COMMAND="_svnstat "
+            NEEDS_CREDS=0
+        ;;
+        log)
+            COMMAND="_svnlog -c "
+            NEEDS_CREDS=0
+        ;;
+        di|diff)
+            COMMAND="_svndiff "
+            NEEDS_CREDS=0
+        ;;
+        blame)
+            COMMAND="_svnblame "
+            NEEDS_CREDS=0
+        ;;
+        in|integrate)
+            COMMAND="_svnmerge "
+            NEEDS_CREDS=0
+        ;;
+        reintegrate)
+            COMMAND="_svnreintegrate "
+            NEEDS_CREDS=0
+        ;;
+        help)
+            NEEDS_CREDS=0
+            if [ -n "$2" ]
+            then
+                case $2 in
+                   st|status)
+                       COMMAND="_svnstat --help "
+                    ;;
+                    log)
+                        COMMAND="_svnlog --help "
+                    ;;
+                    di|diff)
+                        COMMAND="_svndiff --help "
+                    ;;
+                    blame)
+                        COMMAND="_svnblame --help "
+                    ;;
+                    in|integrate)
+                        COMMAND="_svnmerge --help "
+                    ;;
+                    *)
+                        COMMAND="svn $1 "
+                    ;;
+                esac
+            else
+                COMMAND="svn $1 "
+            fi
+        ;;
+        cl|revert)
+            NEEDS_CREDS=0
+            COMMAND="svn $1 "
+        ;;
+        *)
+            COMMAND="svn $1 "
+        ;;
+    esac
+
+    shift
+fi
+
+if [ "--help" = "$1" ]
+then
+    NEEDS_CREDS=0
+    COMMAND="$COMMAND --help "
+    shift
+fi
+
+if [ 1 = $NEEDS_CREDS ]
+then
+    source $BIN_DIR/conf/user_creds.sh
+    COMMAND="$COMMAND --username=$SVN_USERNAME --password=$SVN_PASSWORD "
+fi
+
+$COMMAND "$@"

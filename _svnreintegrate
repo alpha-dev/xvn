@@ -1,0 +1,31 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+# Copyright (c) 2014, Sven Kretschmann
+# All rights reserved.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+source `dirname $0`/conf/env.sh
+
+if [ "--help" = "$1" ]
+then
+    echo "Reintegrate a branch back into trunk."
+    echo
+    echo "Usage: $0 branch_name -r'revision'"
+    echo
+    echo "-r The revision range to reintegrate, if not given, the complete branch will be reintegrated."
+    exit 0
+fi
+
+$PHP_COMMAND $BIN_DIR/helpers/_reintegrate.php $*
